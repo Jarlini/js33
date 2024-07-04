@@ -1,52 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quiz Application</title>
-  <style>body {
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Application</title>
+    <style>
+
+
+
+body {
     font-family: Arial, sans-serif;
-    line-height: 1.6;
     margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   
-  header {
+  .navbar {
+    width: 100%;
     background-color: #333;
-    color: white;
-    padding: 10px;
+    overflow: hidden;
   }
   
-  nav {
-    text-align: left;
-  }
-  
-  button {
-    padding: 8px 16px;
-    background-color: #007bff;
+  .navbar button {
+    float: left;
+    display: block;
     color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    background-color: #333;
     border: none;
     cursor: pointer;
-    margin-left: 10px;
   }
   
-  button:hover {
-    background-color: #0056b3;
+  .navbar button:hover {
+    background-color: #ddd;
+    color: black;
   }
   
-  main {
-    padding: 20px;
+  .filter-buttons {
+    margin: 20px;
   }
   
-  #quizContainer {
-    border: 1px solid #ccc;
-    padding: 20px;
-    margin-bottom: 20px;
+  .filter-buttons button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background-color: #333;
+    color: white;
+    font-size: 16px;
+  }
+  
+  .filter-buttons button:hover {
+    background-color: #ddd;
+    color: black;
+  }
+  
+  #quizContainer, #resultCard {
+    margin: 20px;
   }
   
   #timer {
-    font-size: 18px;
-    margin-bottom: 10px;
+    position: relative;
+    /* width: 100px;
+    height: 100px; */
+    /* margin: 2px 1px; */
+    justify-content: left;
+  }
+  
+  #timer svg {
+    width: 100px;
+    height: 100px;
+    transform: rotate(-90deg);
+  }
+  
+  #timer circle {
+    fill: none;
+    stroke-width: 10;
+  }
+  
+  #timer circle:first-child {
+    stroke: #e6e6e6;
+  }
+  
+  #timer #timeCircle {
+    stroke: #3498db;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear;
+  }
+  
+  #timeRemaining {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    font-weight: bold;
+  }
+  
+  #questionTitle {
+    margin-bottom: 20px;
   }
   
   #optionsList {
@@ -55,34 +112,47 @@
   }
   
   #optionsList li {
-    margin-bottom: 10px;
+    margin: 10px 0;
   }
   
-  #submitAnswer, #restartQuiz {
-    margin-top: 10px;background-color: aqua;
-  }</style>
+  #submitAnswerBtn, #restartQuizBtn {
+    margin-top: 20px;
+  }
+
+Thanks a lot for sharing.O
+    </style>
 </head>
 <body>
-  <header>
-    <nav>
-      <button id="cancelQuizBtn">Cancel Quiz</button>
-    </nav>
-  </header>
-  <main>
-    <div id="quizContainer">
-      <div id="timer">Time Remaining: <span id="time">10</span> seconds</div>
-      <h1 id="questionTitle"></h1>
-      <ul id="optionsList"style="disc"></ul>
-      <button id="submitAnswer">Submit Answer</button>
+    <div class="navbar">
+        <button id="cancelQuizBtn">Cancel Quiz</button>
     </div>
-    <div id="resultCard">
-      <h2>Quiz Results</h2>
-      <p id="quizResult"></p>
-      <button id="restartQuiz">Restart Quiz</button>
+    <div class="filter-buttons">
+        <button id="javascriptQuestionsBtn">JavaScript Questions</button>
+        <button id="htmlQuestionsBtn">HTML Questions</button>
+        <button id="cssQuestionsBtn">CSS Questions</button>
     </div>
-  </main>
-  
-  <script>
+    
+        <div id="timer" style="justify-content: left; justify-items: left;">
+            <svg>
+                <circle cx="50" cy="50" r="45"></circle>
+                <circle cx="50" cy="50" r="45" id="timeCircle"></circle>
+            </svg>
+            <div id="timeRemaining">20</div>
+        </div>
+   
+    <div id="quizContainer"></div>
+        <h2 id="questionTitle"></h2>
+        <ul id="optionsList"></ul>
+        <button id="submitAnswerBtn">Submit Answer</button>
+    </div>
+    <div id="resultCard" style="display: none;">
+        <h2 id="resultMessage"></h2>
+        <button id="restartQuizBtn">Restart Quiz</button>
+    </div>
+    <script>
+        
+
+
 const questions = [
     {
         category: "JavaScript",
@@ -264,126 +334,116 @@ const questions = [
         options: ["#demo", ".demo", "demo", "*demo"],
         correctAnswer: "#demo"
     }
-
 ];
 
+
+let currentQuestions = [...questions];
 let currentQuestionIndex = 0;
 let correctAnswers = 0;
 let timerInterval;
-let timeRemaining = 10;
+let timeRemaining = 20;
+const fullDashArray = 283;
 
-const timerElement = document.getElementById('timer');
-const questionTitleElement = document.getElementById('questionTitle');
-const optionsListElement = document.getElementById('optionsList');
-const submitAnswerButton = document.getElementById('submitAnswer');
-const resultCardElement = document.getElementById('resultCard');
-const resultTextElement = document.getElementById('resultText');
-const restartQuizButton = document.getElementById('restartQuiz');
-const cancelQuizButton = document.getElementById('cancelQuiz');
-const questionListElement = document.getElementById('questionList');
+document.getElementById('cancelQuizBtn').addEventListener('click', cancelQuiz);
+document.getElementById('javascriptQuestionsBtn').addEventListener('click', () => filterQuestions('JavaScript'));
+document.getElementById('htmlQuestionsBtn').addEventListener('click', () => filterQuestions('HTML'));
+document.getElementById('cssQuestionsBtn').addEventListener('click', () => filterQuestions('CSS'));
+document.getElementById('submitAnswerBtn').addEventListener('click', submitAnswer);
+document.getElementById('restartQuizBtn').addEventListener('click', restartQuiz);
 
 function startTimer() {
-    timeRemaining = 10;
-    timerInterval = setInterval(() => {
-        timeRemaining--;
-        timerElement.textContent = `00:${timeRemaining < 10 ? '0' : ''}${timeRemaining}`;
-        if (timeRemaining <= 0) {
-            clearInterval(timerInterval);
-            submitAnswer();
-        }
-    }, 1000);
+clearInterval(timerInterval);
+timeRemaining = 20;
+updateCircle();
+timerInterval = setInterval(() => {
+    timeRemaining--;
+    document.getElementById('timeRemaining').innerText = timeRemaining;
+    updateCircle();
+    if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        displayResult();
+    }
+}, 1000);
+}
+
+function updateCircle() {
+const circle = document.getElementById('timeCircle');
+const dashOffset = fullDashArray - (fullDashArray * timeRemaining) / 20;
+circle.style.strokeDashoffset = dashOffset;
 }
 
 function displayQuestion() {
-    const currentQuestion = questions[currentQuestionIndex];
-    questionTitleElement.textContent = currentQuestion.question;
-    optionsListElement.innerHTML = '';
-    currentQuestion.options.forEach(option => {
-        const li = document.createElement('li');
-        li.textContent = option;
-        li.addEventListener('click', () => markAnswer(option));
-        optionsListElement.appendChild(li);
-    });
-
-    highlightCurrentQuestion();
+if (currentQuestionIndex >= currentQuestions.length) {
+    displayResult();
+    return;
 }
 
-function markAnswer(selectedOption) {
-    const currentQuestion = questions[currentQuestionIndex];
-    if (selectedOption === currentQuestion.answer) {
-        correctAnswers++;
-    }
-    currentQuestionIndex++;
-    if (currentQuestionIndex < questions.length) {
-        displayQuestion();
-        clearInterval(timerInterval);
-        startTimer();
-    } else {
-        displayResult();
-    }
+const question = currentQuestions[currentQuestionIndex];
+document.getElementById('questionTitle').innerText = question.question;
+const optionsList = document.getElementById('optionsList');
+optionsList.innerHTML = '';
+question.options.forEach((option, index) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<input type="radio" name="option" value="${option}" id="option${index}">
+                    <label for="option${index}">${option}</label>`;
+    optionsList.appendChild(li);
+});
+startTimer();
 }
 
 function submitAnswer() {
-    clearInterval(timerInterval);
-    markAnswer(document.querySelector('li.selected')?.textContent);
+const selectedOption = document.querySelector('input[name="option"]:checked');
+if (!selectedOption) return;
+
+const selectedAnswer = selectedOption.value;
+const question = currentQuestions[currentQuestionIndex];
+
+if (selectedAnswer === question.correctAnswer) {
+    correctAnswers++;
+    selectedOption.parentElement.style.color = 'green';
+} else {
+    selectedOption.parentElement.style.color = 'red';
+}
+
+setTimeout(() => {
+    currentQuestionIndex++;
+    displayQuestion();
+}, 1000);
 }
 
 function displayResult() {
-    document.getElementById('quiz').classList.add('hidden');
-    resultCardElement.classList.remove('hidden');
-    resultTextElement.textContent = `You got ${correctAnswers} out of ${questions.length} correct.`;
+clearInterval(timerInterval);
+document.getElementById('quizContainer').style.display = 'none';
+document.getElementById('resultCard').style.display = 'block';
+document.getElementById('resultMessage').innerText = `Quiz finished! You got ${correctAnswers} out of ${currentQuestions.length} correct.`;
 }
 
 function cancelQuiz() {
-    clearInterval(timerInterval);
-    resultCardElement.classList.remove('hidden');
-    resultTextElement.textContent = "Quiz cancelled.";
+clearInterval(timerInterval);
+document.getElementById('quizContainer').style.display = 'none';
+document.getElementById('resultCard').style.display = 'block';
+document.getElementById('resultMessage').innerText = 'Quiz cancelled.';
+}
+
+function filterQuestions(category) {
+currentQuestions = questions.filter(question => question.category === category);
+currentQuestionIndex = 0;
+correctAnswers = 0;
+displayQuestion();
 }
 
 function restartQuiz() {
-    currentQuestionIndex = 0;
-    correctAnswers = 0;
-    resultCardElement.classList.add('hidden');
-    document.getElementById('quiz').classList.remove('hidden');
-    displayQuestion();
-    startTimer();
-}
-
-function highlightCurrentQuestion() {
-    Array.from(questionListElement.children).forEach((child, index) => {
-        if (index === currentQuestionIndex) {
-            child.classList.add('active');
-        } else {
-            child.classList.remove('active');
-        }
-    });
-}
-
-function populateQuestionList() {
-    questionListElement.innerHTML = '';
-    questions.forEach((_, index) => {
-        const div = document.createElement('div');
-        div.textContent = `Question ${index + 1}`;
-        div.addEventListener('click', () => {
-            currentQuestionIndex = index;
-            displayQuestion();
-            clearInterval(timerInterval);
-            startTimer();
-        });
-        questionListElement.appendChild(div);
-    });
-}
-
-submitAnswerButton.addEventListener('click', submitAnswer);
-cancelQuizButton.addEventListener('click', cancelQuiz);
-restartQuizButton.addEventListener('click', restartQuiz);
-
-populateQuestionList();
+currentQuestions = [...questions];
+currentQuestionIndex = 0;
+correctAnswers = 0;
+document.getElementById('quizContainer').style.display = 'block';
+document.getElementById('resultCard').style.display = 'none';
 displayQuestion();
-startTimer();
+}
 
+// Start the quiz initially
+displayQuestion();
 
-
-  </script>
+</script>
 </body>
 </html>
